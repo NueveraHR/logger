@@ -1,8 +1,9 @@
 {
   "name": "@nueverahr/logger",
-  "version": "1.0.0",
-  "description": "Winston wrapper for Nestjs",
-  "main": "index.js",
+  "version": "1.0.1",
+  "description": "Winston wrapper for NestJS",
+  "main": "dist/index",
+  "types": "dist/index",
   "scripts": {
     "build": "rimraf dist && tsc",
     "prepublish": "npm run build",
