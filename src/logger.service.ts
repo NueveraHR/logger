@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import * as path from "path";
 import * as winston from "winston";
+import { LoggerLevel } from ".";
 import { LoggerOptions } from "./logger.interface";
 
 @Injectable()
@@ -8,30 +9,40 @@ export class LoggerService {
   private loggerFileName: string;
   private winstonLoggerInstance: any;
 
-  constructor({ logDirPath, level, isProd }: LoggerOptions) {
+  constructor({
+    logDirPath,
+    level = LoggerLevel.debug,
+    isProd,
+  }: LoggerOptions) {
     if (isProd) {
       this.loggerFileName = new Date().getTime() + ".log";
     } else {
       this.loggerFileName = "nuevera.log";
     }
 
-    const myFormat = winston.format.printf(({ level, message, timestamp }) => {
-      return `${level.toUpperCase()} :: ${timestamp} :: ${message}`;
-    });
+    const defaultFormat = [
+      winston.format.errors({ stack: true }), // <-- use errors format
+      winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+      winston.format.prettyPrint(),
+      winston.format.printf(({ level, message, timestamp }) => {
+        return `[${level.toUpperCase()}] ${timestamp} :: ${message}`;
+      }),
+    ];
 
     this.winstonLoggerInstance = winston.createLogger({
-      level,
-      format: winston.format.combine(
-        winston.format.errors({ stack: true }), // <-- use errors format
-        winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-        winston.format.prettyPrint(),
-        myFormat
-      ),
       transports: [
         new winston.transports.File({
+          level,
+          format: winston.format.combine(...defaultFormat),
           filename: path.join(logDirPath, this.loggerFileName),
         }),
-        new winston.transports.Console(),
+        new winston.transports.Console({
+          level,
+          format: winston.format.combine(
+            winston.format.colorize({ message: true, level: false }),
+            ...defaultFormat
+          ),
+        }),
       ],
     });
   }
